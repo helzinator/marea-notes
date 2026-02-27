@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Note, NoteTag } from "@/lib/types";
 
 type NotesListProps = {
@@ -59,8 +59,22 @@ export default function NotesList({
   tags,
 }: NotesListProps) {
   const [query, setQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  const sortRef = useRef<HTMLDivElement | null>(null);
 
-  const visibleNotes = query.trim()
+  useEffect(() => {
+    const onClickOutside = (event: MouseEvent) => {
+      if (!sortRef.current) return;
+      if (!sortRef.current.contains(event.target as Node)) {
+        setIsSortOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  const filteredNotes = query.trim()
     ? notes.filter((n) => {
         const q = query.toLowerCase();
         return (
@@ -70,6 +84,11 @@ export default function NotesList({
         );
       })
     : notes;
+  
+  const visibleNotes = [...filteredNotes].sort((a, b) => {
+    const delta = a.updatedAt.getTime() - b.updatedAt.getTime();
+    return sortOrder === "oldest" ? delta : -delta;
+  });
 
   return (
     <div className="flex flex-col w-[300px] min-h-screen bg-[#EAF5F6] border-r border-[#B8D3D8] flex-shrink-0">
@@ -116,12 +135,53 @@ export default function NotesList({
         <span className="text-[11px] text-[#5E8891] font-medium">
           {visibleNotes.length} note{visibleNotes.length !== 1 ? "s" : ""}
         </span>
-        <button className="flex items-center gap-1 text-[11px] text-[#5E8891] hover:text-[#0F7F8E] transition-colors">
-          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-          </svg>
-          Updated
-        </button>
+        <div className="relative" ref={sortRef}>
+          <button
+            onClick={() => setIsSortOpen((prev) => !prev)}
+            className="flex items-center gap-1 text-[11px] text-[#5E8891] hover:text-[#0F7F8E] transition-colors"
+            aria-haspopup="menu"
+            aria-expanded={isSortOpen}
+          >
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+            </svg>
+            {sortOrder === "newest" ? "Updated" : "Oldest"}
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {isSortOpen && (
+            <div className="absolute right-0 mt-1 min-w-[132px] rounded-lg border border-[#B8D3D8] bg-white shadow-md z-20 overflow-hidden">
+              <button
+                onClick={() => {
+                  setSortOrder("newest");
+                  setIsSortOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 text-[12px] transition-colors ${
+                  sortOrder === "newest"
+                    ? "bg-[#E2F1F3] text-[#0F7F8E] font-medium"
+                    : "text-[#3E6770] hover:bg-[#F2F8F9]"
+                }`}
+              >
+                Updated
+              </button>
+              <button
+                onClick={() => {
+                  setSortOrder("oldest");
+                  setIsSortOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 text-[12px] transition-colors ${
+                  sortOrder === "oldest"
+                    ? "bg-[#E2F1F3] text-[#0F7F8E] font-medium"
+                    : "text-[#3E6770] hover:bg-[#F2F8F9]"
+                }`}
+              >
+                Oldest
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Notes list */}
