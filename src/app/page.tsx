@@ -13,64 +13,71 @@ let nextId = 100;
 export default function Home() {
   const [activeUser, setActiveUser] = useState<UserProfile | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [tags, setTags] = useState<NoteTag[]>(TAGS);
   const [activeNav, setActiveNav] = useState("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [openInEditMode, setOpenInEditMode] = useState(false);
+  const [isLoadingUser, setIsLoadingUser] = useState(false);
 
   const handleSelectUser = (user: UserProfile) => {
-    setActiveUser(user);
-    const userNotes = notesByUser[user.id] ?? [];
-    setNotes(userNotes);
-    const firstNote = userNotes.find((n) => n.isPinned && !n.isArchived) ?? userNotes[0] ?? null;
-    setSelectedId(firstNote?.id ?? null);
-    setActiveNav("all");
+    setIsLoadingUser(true);
+    setTimeout(() => {
+      setActiveUser(user);
+      const userNotes = notesByUser[user.id] ?? [];
+      setNotes(userNotes);
+      const firstNote = userNotes.find((n) => n.isPinned && !n.isArchived) ?? userNotes[0] ?? null;
+      setSelectedId(firstNote?.id ?? null);
+      setActiveNav("all");
+      setIsLoadingUser(false);
+    }, 400);
   };
 
   const handleSwitchUser = () => {
     setActiveUser(null);
     setNotes([]);
     setSelectedId(null);
+    setTags(TAGS);
   };
 
-  const tagIds = useMemo(() => new Set(TAGS.map((t) => t.id)), []);
+  const tagIds = useMemo(() => new Set(tags.map((t) => t.id)), [tags]);
 
   const filteredNotes = useMemo(() => {
     switch (activeNav) {
       case "pinned":
-        return notes.filter((n) => n.isPinned && !n.isArchived);
+        return notes.filter((n) => n.isPinned && !n.isArchived && !n.isTrashed);
       case "recent":
         return [...notes]
-          .filter((n) => !n.isArchived)
+          .filter((n) => !n.isArchived && !n.isTrashed)
           .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
           .slice(0, 5);
       case "archived":
-        return notes.filter((n) => n.isArchived);
+        return notes.filter((n) => n.isArchived && !n.isTrashed);
       case "trash":
-        return [];
+        return notes.filter((n) => n.isTrashed);
       default:
         if (tagIds.has(activeNav)) {
-          return notes.filter((n) => !n.isArchived && n.tags.some((t) => t.id === activeNav));
+          return notes.filter((n) => !n.isArchived && !n.isTrashed && n.tags.some((t) => t.id === activeNav));
         }
-        return notes.filter((n) => !n.isArchived);
+        return notes.filter((n) => !n.isArchived && !n.isTrashed);
     }
   }, [notes, activeNav, tagIds]);
 
   const noteCounts = useMemo(() => {
     const tagCounts = Object.fromEntries(
-      TAGS.map((tag) => [
+      tags.map((tag) => [
         tag.id,
-        notes.filter((n) => !n.isArchived && n.tags.some((t) => t.id === tag.id)).length,
+        notes.filter((n) => !n.isArchived && !n.isTrashed && n.tags.some((t) => t.id === tag.id)).length,
       ])
     );
     return {
-      all: notes.filter((n) => !n.isArchived).length,
-      pinned: notes.filter((n) => n.isPinned && !n.isArchived).length,
-      recent: Math.min(notes.filter((n) => !n.isArchived).length, 5),
-      archived: notes.filter((n) => n.isArchived).length,
-      trash: 0,
+      all: notes.filter((n) => !n.isArchived && !n.isTrashed).length,
+      pinned: notes.filter((n) => n.isPinned && !n.isArchived && !n.isTrashed).length,
+      recent: Math.min(notes.filter((n) => !n.isArchived && !n.isTrashed).length, 5),
+      archived: notes.filter((n) => n.isArchived && !n.isTrashed).length,
+      trash: notes.filter((n) => n.isTrashed).length,
       ...tagCounts,
     };
-  }, [notes]);
+  }, [notes, tags]);
 
   const selectedNote = notes.find((n) => n.id === selectedId) ?? null;
 
@@ -79,7 +86,7 @@ export default function Home() {
       id: `n${++nextId}`,
       title: "Untitled Note",
       content: "",
-      tags: [TAGS[0]],
+      tags: tags.length > 0 ? [tags[0]] : [],
       isPinned: false,
       isArchived: false,
       createdAt: new Date(),
@@ -95,15 +102,46 @@ export default function Home() {
     setNotes((prev) => prev.map((n) => (n.id === updated.id ? updated : n)));
   };
 
+  // Moves note to trash; if already trashed, permanently deletes
   const handleDelete = (id: string) => {
-    setNotes((prev) => prev.filter((n) => n.id !== id));
+    const note = notes.find((n) => n.id === id);
+    if (note?.isTrashed) {
+      setNotes((prev) => prev.filter((n) => n.id !== id));
+    } else {
+      setNotes((prev) =>
+        prev.map((n) => n.id === id ? { ...n, isTrashed: true, isPinned: false } : n)
+      );
+    }
     setSelectedId(null);
+  };
+
+  const handleRestore = (id: string) => {
+    setNotes((prev) => prev.map((n) => n.id === id ? { ...n, isTrashed: false } : n));
   };
 
   const handleNavChange = (nav: string) => {
     setActiveNav(nav);
     setSelectedId(null);
   };
+
+  const handleDeleteTag = (id: string) => {
+    setTags((prev) => prev.filter((t) => t.id !== id));
+    setNotes((prev) => prev.map((n) => ({ ...n, tags: n.tags.filter((t) => t.id !== id) })));
+    if (activeNav === id) setActiveNav("all");
+  };
+
+  const handleReorderTags = (newTags: NoteTag[]) => setTags(newTags);
+
+  if (isLoadingUser) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#EAF5F6]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-2 border-[#0F7F8E] border-t-transparent animate-spin" />
+          <p className="text-sm text-[#3E6770]">Loading notes…</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!activeUser) {
     return <UserSelect onSelect={handleSelectUser} />;
@@ -118,6 +156,9 @@ export default function Home() {
         user={activeUser}
         onSwitchUser={handleSwitchUser}
         onNewNote={handleNewNote}
+        tags={tags}
+        onDeleteTag={handleDeleteTag}
+        onReorderTags={handleReorderTags}
       />
       <NotesList
         notes={filteredNotes}
@@ -126,13 +167,16 @@ export default function Home() {
         onDelete={handleDelete}
         onNewNote={handleNewNote}
         activeNav={activeNav}
+        tags={tags}
       />
       <NoteEditor
         key={selectedNote?.id ?? "empty-note"}
         note={selectedNote}
         onUpdate={handleUpdate}
         onDelete={handleDelete}
+        onRestore={handleRestore}
         defaultEditing={openInEditMode}
+        availableTags={tags}
       />
     </div>
   );

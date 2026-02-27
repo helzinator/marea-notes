@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Note } from "@/lib/types";
-import { TAGS } from "@/lib/mockData";
+import { Note, NoteTag } from "@/lib/types";
 
 type NotesListProps = {
   notes: Note[];
@@ -11,6 +10,7 @@ type NotesListProps = {
   onDelete: (id: string) => void;
   onNewNote: () => void;
   activeNav: string;
+  tags: NoteTag[];
 };
 
 function formatDate(date: Date): string {
@@ -35,11 +35,19 @@ const NAV_LABELS: Record<string, string> = {
   trash: "Trash",
 };
 
-function getNavLabel(activeNav: string): string {
+function getNavLabel(activeNav: string, tags: NoteTag[]): string {
   if (NAV_LABELS[activeNav]) return NAV_LABELS[activeNav];
-  const tag = TAGS.find((t) => t.id === activeNav);
+  const tag = tags.find((t) => t.id === activeNav);
   return tag ? tag.label : "Notes";
 }
+
+const EMPTY_MESSAGES: Record<string, { title: string; sub: string }> = {
+  all: { title: "No notes yet", sub: "Create your first note to get started" },
+  pinned: { title: "Nothing pinned", sub: "Pin important notes to find them quickly" },
+  recent: { title: "No recent notes", sub: "Notes you've edited recently will appear here" },
+  archived: { title: "Archive is empty", sub: "Archived notes will appear here" },
+  trash: { title: "Trash is empty", sub: "Deleted notes will appear here" },
+};
 
 export default function NotesList({
   notes,
@@ -48,6 +56,7 @@ export default function NotesList({
   onDelete,
   onNewNote,
   activeNav,
+  tags,
 }: NotesListProps) {
   const [query, setQuery] = useState("");
 
@@ -68,7 +77,7 @@ export default function NotesList({
       <div className="px-4 pt-6 pb-3">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-[15px] font-semibold text-[#103A42]">
-            {getNavLabel(activeNav)}
+            {getNavLabel(activeNav, tags)}
           </h2>
           <button
             onClick={onNewNote}
@@ -124,8 +133,12 @@ export default function NotesList({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <p className="text-sm font-medium text-[#3E6770]">No notes here</p>
-            <p className="text-xs text-[#7EAAB2] mt-1">Create your first note to get started</p>
+            <p className="text-sm font-medium text-[#3E6770]">
+              {query.trim() ? "No results" : (EMPTY_MESSAGES[activeNav]?.title ?? "No notes here")}
+            </p>
+            <p className="text-xs text-[#7EAAB2] mt-1">
+              {query.trim() ? `No notes match "${query}"` : (EMPTY_MESSAGES[activeNav]?.sub ?? "")}
+            </p>
           </div>
         ) : (
           visibleNotes.map((note) => {
@@ -147,7 +160,7 @@ export default function NotesList({
                     e.stopPropagation();
                     onDelete(note.id);
                   }}
-                  title="Delete note"
+                  title={activeNav === "trash" ? "Delete permanently" : "Move to trash"}
                   className="absolute top-2.5 right-2.5 p-1 rounded-md opacity-0 group-hover:opacity-100 text-[#7EAAB2] hover:bg-red-50 hover:text-red-500 transition-all"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

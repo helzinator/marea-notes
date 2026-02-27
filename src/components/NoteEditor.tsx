@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import { Note, NoteTag } from "@/lib/types";
-import { TAGS } from "@/lib/mockData";
 import BlobDecoration from "./BlobDecoration";
 
 type NoteEditorProps = {
   note: Note | null;
   onUpdate: (updated: Note) => void;
   onDelete: (id: string) => void;
+  onRestore: (id: string) => void;
   defaultEditing?: boolean;
+  availableTags: NoteTag[];
 };
 
 function formatFullDate(date: Date): string {
@@ -29,21 +30,18 @@ function wordCount(text: string): number {
 
 function DeleteConfirmDialog({
   title,
+  isPermanent,
   onConfirm,
   onCancel,
 }: {
   title: string;
+  isPermanent: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-[#0E5663]/40 backdrop-blur-sm"
-        onClick={onCancel}
-      />
-      {/* Dialog */}
+      <div className="absolute inset-0 bg-[#0E5663]/40 backdrop-blur-sm" onClick={onCancel} />
       <div className="relative bg-white rounded-2xl shadow-xl shadow-[#103A42]/15 w-full max-w-sm mx-4 p-6 border border-[#B8D3D8]">
         <div className="flex items-start gap-4 mb-5">
           <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
@@ -52,9 +50,14 @@ function DeleteConfirmDialog({
             </svg>
           </div>
           <div>
-            <h3 className="text-[15px] font-semibold text-[#103A42] mb-1">Delete note?</h3>
+            <h3 className="text-[15px] font-semibold text-[#103A42] mb-1">
+              {isPermanent ? "Delete permanently?" : "Move to trash?"}
+            </h3>
             <p className="text-sm text-[#3E6770] leading-relaxed">
-              <span className="font-medium text-[#103A42]">&ldquo;{title}&rdquo;</span> will be permanently deleted. This action cannot be undone.
+              <span className="font-medium text-[#103A42]">&ldquo;{title}&rdquo;</span>{" "}
+              {isPermanent
+                ? "will be permanently deleted and cannot be recovered."
+                : "will be moved to trash. You can restore it later."}
             </p>
           </div>
         </div>
@@ -69,7 +72,7 @@ function DeleteConfirmDialog({
             onClick={onConfirm}
             className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors shadow-sm shadow-red-500/20"
           >
-            Delete
+            {isPermanent ? "Delete permanently" : "Move to trash"}
           </button>
         </div>
       </div>
@@ -77,7 +80,7 @@ function DeleteConfirmDialog({
   );
 }
 
-export default function NoteEditor({ note, onUpdate, onDelete, defaultEditing = false }: NoteEditorProps) {
+export default function NoteEditor({ note, onUpdate, onDelete, onRestore, defaultEditing = false, availableTags }: NoteEditorProps) {
   const [title, setTitle] = useState(note?.title ?? "");
   const [patientName, setPatientName] = useState(note?.patientName ?? "");
   const [visitDate, setVisitDate] = useState(
@@ -86,6 +89,8 @@ export default function NoteEditor({ note, onUpdate, onDelete, defaultEditing = 
   const [tags, setTags] = useState<NoteTag[]>(note?.tags ?? []);
   const [content, setContent] = useState(note?.content ?? "");
   const [isEditing, setIsEditing] = useState(defaultEditing);
+  const [isSaving, setIsSaving] = useState(false);
+  const [titleError, setTitleError] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   if (!note) {
@@ -117,16 +122,25 @@ export default function NoteEditor({ note, onUpdate, onDelete, defaultEditing = 
   }
 
   const handleSave = () => {
-    onUpdate({
-      ...note,
-      title,
-      patientName: patientName || undefined,
-      visitDate: visitDate ? new Date(visitDate) : undefined,
-      tags,
-      content,
-      updatedAt: new Date(),
-    });
-    setIsEditing(false);
+    if (!title.trim()) {
+      setTitleError(true);
+      return;
+    }
+    setTitleError(false);
+    setIsSaving(true);
+    setTimeout(() => {
+      onUpdate({
+        ...note,
+        title: title.trim(),
+        patientName: patientName || undefined,
+        visitDate: visitDate ? new Date(visitDate) : undefined,
+        tags,
+        content,
+        updatedAt: new Date(),
+      });
+      setIsEditing(false);
+      setIsSaving(false);
+    }, 500);
   };
 
   const handleTogglePin = () => {
@@ -200,7 +214,17 @@ export default function NoteEditor({ note, onUpdate, onDelete, defaultEditing = 
           </div>
 
           <div className="flex items-center gap-2">
-            {isEditing ? (
+            {note.isTrashed ? (
+              <button
+                onClick={() => onRestore(note.id)}
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-[#E2F1F3] text-[#0F7F8E] text-sm font-medium rounded-lg hover:bg-[#D9ECEF] transition-colors border border-[#C4E2E7]"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                </svg>
+                Restore
+              </button>
+            ) : isEditing ? (
               <>
                 <button
                   onClick={() => {
@@ -209,6 +233,7 @@ export default function NoteEditor({ note, onUpdate, onDelete, defaultEditing = 
                     setVisitDate(note.visitDate ? note.visitDate.toISOString().slice(0, 10) : "");
                     setTags(note.tags);
                     setContent(note.content);
+                    setTitleError(false);
                     setIsEditing(false);
                   }}
                   className="px-3.5 py-1.5 text-sm text-[#3E6770] hover:text-[#103A42] transition-colors"
@@ -217,12 +242,22 @@ export default function NoteEditor({ note, onUpdate, onDelete, defaultEditing = 
                 </button>
                 <button
                   onClick={handleSave}
-                  className="flex items-center gap-1.5 px-4 py-1.5 bg-[#0F7F8E] text-white text-sm font-medium rounded-lg hover:bg-[#0C6F7D] transition-colors shadow-sm shadow-[#0F7F8E]/20"
+                  disabled={isSaving}
+                  className="flex items-center gap-1.5 px-4 py-1.5 bg-[#0F7F8E] text-white text-sm font-medium rounded-lg hover:bg-[#0C6F7D] transition-colors shadow-sm shadow-[#0F7F8E]/20 disabled:opacity-70"
                 >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                  Save
+                  {isSaving ? (
+                    <>
+                      <div className="w-3.5 h-3.5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                      Saving…
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      Save
+                    </>
+                  )}
                 </button>
               </>
             ) : (
@@ -240,7 +275,7 @@ export default function NoteEditor({ note, onUpdate, onDelete, defaultEditing = 
             <button
               onClick={() => setShowDeleteConfirm(true)}
               className="p-2 rounded-lg text-[#7EAAB2] hover:bg-red-50 hover:text-red-500 transition-all"
-              title="Delete note"
+              title={note.isTrashed ? "Delete permanently" : "Move to trash"}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -284,7 +319,7 @@ export default function NoteEditor({ note, onUpdate, onDelete, defaultEditing = 
               </div>
               {/* Available tags to add */}
               <div className="flex flex-wrap gap-1.5">
-                {TAGS.filter((t) => !tags.some((active) => active.id === t.id)).map((tag) => (
+                {availableTags.filter((t) => !tags.some((active) => active.id === t.id)).map((tag) => (
                   <button
                     key={tag.id}
                     onClick={() => setTags((prev) => [...prev, tag])}
