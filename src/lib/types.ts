@@ -13,6 +13,7 @@ export type Note = {
   tags: NoteTag[];
   isPinned: boolean;
   isArchived: boolean;
+  isTrashed?: boolean;
   createdAt: Date;
   updatedAt: Date;
   color?: string;

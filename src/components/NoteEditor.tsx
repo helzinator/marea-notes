@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Note } from "@/lib/types";
+import { Note, NoteTag } from "@/lib/types";
+import { TAGS } from "@/lib/mockData";
 import BlobDecoration from "./BlobDecoration";
 
 type NoteEditorProps = {
   note: Note | null;
   onUpdate: (updated: Note) => void;
   onDelete: (id: string) => void;
+  defaultEditing?: boolean;
 };
 
 function formatFullDate(date: Date): string {
@@ -75,14 +77,15 @@ function DeleteConfirmDialog({
   );
 }
 
-export default function NoteEditor({ note, onUpdate, onDelete }: NoteEditorProps) {
+export default function NoteEditor({ note, onUpdate, onDelete, defaultEditing = false }: NoteEditorProps) {
   const [title, setTitle] = useState(note?.title ?? "");
   const [patientName, setPatientName] = useState(note?.patientName ?? "");
   const [visitDate, setVisitDate] = useState(
     note?.visitDate ? note.visitDate.toISOString().slice(0, 10) : ""
   );
+  const [tags, setTags] = useState<NoteTag[]>(note?.tags ?? []);
   const [content, setContent] = useState(note?.content ?? "");
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(defaultEditing);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   if (!note) {
@@ -119,6 +122,7 @@ export default function NoteEditor({ note, onUpdate, onDelete }: NoteEditorProps
       title,
       patientName: patientName || undefined,
       visitDate: visitDate ? new Date(visitDate) : undefined,
+      tags,
       content,
       updatedAt: new Date(),
     });
@@ -203,6 +207,7 @@ export default function NoteEditor({ note, onUpdate, onDelete }: NoteEditorProps
                     setTitle(note.title);
                     setPatientName(note.patientName ?? "");
                     setVisitDate(note.visitDate ? note.visitDate.toISOString().slice(0, 10) : "");
+                    setTags(note.tags);
                     setContent(note.content);
                     setIsEditing(false);
                   }}
@@ -247,23 +252,75 @@ export default function NoteEditor({ note, onUpdate, onDelete }: NoteEditorProps
         {/* Content area */}
         <div className="relative z-10 flex-1 overflow-y-auto px-8 py-6">
           {/* Tags */}
-          {note.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              {note.tags.map((tag) => (
-                <span
-                  key={tag.id}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium"
-                  style={{
-                    backgroundColor: tag.color + "18",
-                    color: tag.color,
-                    border: `1px solid ${tag.color}30`,
-                  }}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tag.color }} />
-                  {tag.label}
-                </span>
-              ))}
+          {isEditing ? (
+            <div className="mb-5">
+              {/* Active tags with remove button */}
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {tags.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="inline-flex items-center gap-1 pl-2.5 pr-1 py-1 rounded-full text-[11px] font-medium"
+                    style={{
+                      backgroundColor: tag.color + "20",
+                      color: tag.color,
+                      border: `1px solid ${tag.color}35`,
+                    }}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
+                    {tag.label}
+                    <button
+                      onClick={() => setTags((prev) => prev.filter((t) => t.id !== tag.id))}
+                      className="ml-0.5 w-4 h-4 rounded-full flex items-center justify-center hover:bg-black/10 transition-colors"
+                    >
+                      <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </span>
+                ))}
+                {tags.length === 0 && (
+                  <span className="text-[11px] text-[#9FC2C8] italic">No tags — add one below</span>
+                )}
+              </div>
+              {/* Available tags to add */}
+              <div className="flex flex-wrap gap-1.5">
+                {TAGS.filter((t) => !tags.some((active) => active.id === t.id)).map((tag) => (
+                  <button
+                    key={tag.id}
+                    onClick={() => setTags((prev) => [...prev, tag])}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border border-dashed transition-all hover:opacity-80"
+                    style={{
+                      color: tag.color,
+                      borderColor: tag.color + "60",
+                    }}
+                  >
+                    <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    {tag.label}
+                  </button>
+                ))}
+              </div>
             </div>
+          ) : (
+            (note.tags.length > 0) && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {note.tags.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium"
+                    style={{
+                      backgroundColor: tag.color + "18",
+                      color: tag.color,
+                      border: `1px solid ${tag.color}30`,
+                    }}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: tag.color }} />
+                    {tag.label}
+                  </span>
+                ))}
+              </div>
+            )
           )}
 
           {/* Title */}

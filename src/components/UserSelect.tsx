@@ -41,8 +41,8 @@ export default function UserSelect({ onSelect }: UserSelectProps) {
       {/* Content */}
       <div className="relative z-10 w-full max-w-2xl">
         {/* Logo */}
-        <div className="flex justify-center mb-10">
-          <Image src={MareaLogo} alt="Marea" priority className="h-28 w-auto" />
+        <div className="flex justify-center mb-8 h-[86px] overflow-hidden">
+          <Image src={MareaLogo} alt="Marea" priority className="h-28 w-auto -mt-7" />
         </div>
 
         {/* Heading */}

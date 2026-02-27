@@ -5,7 +5,7 @@ import Sidebar from "@/components/Sidebar";
 import NotesList from "@/components/NotesList";
 import NoteEditor from "@/components/NoteEditor";
 import UserSelect from "@/components/UserSelect";
-import { Note, UserProfile } from "@/lib/types";
+import { Note, NoteTag, UserProfile } from "@/lib/types";
 import { notesByUser, TAGS } from "@/lib/mockData";
 
 let nextId = 100;
@@ -15,6 +15,7 @@ export default function Home() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [activeNav, setActiveNav] = useState("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [openInEditMode, setOpenInEditMode] = useState(false);
 
   const handleSelectUser = (user: UserProfile) => {
     setActiveUser(user);
@@ -31,6 +32,8 @@ export default function Home() {
     setSelectedId(null);
   };
 
+  const tagIds = useMemo(() => new Set(TAGS.map((t) => t.id)), []);
+
   const filteredNotes = useMemo(() => {
     switch (activeNav) {
       case "pinned":
@@ -45,20 +48,29 @@ export default function Home() {
       case "trash":
         return [];
       default:
+        if (tagIds.has(activeNav)) {
+          return notes.filter((n) => !n.isArchived && n.tags.some((t) => t.id === activeNav));
+        }
         return notes.filter((n) => !n.isArchived);
     }
-  }, [notes, activeNav]);
+  }, [notes, activeNav, tagIds]);
 
-  const noteCounts = useMemo(
-    () => ({
+  const noteCounts = useMemo(() => {
+    const tagCounts = Object.fromEntries(
+      TAGS.map((tag) => [
+        tag.id,
+        notes.filter((n) => !n.isArchived && n.tags.some((t) => t.id === tag.id)).length,
+      ])
+    );
+    return {
       all: notes.filter((n) => !n.isArchived).length,
       pinned: notes.filter((n) => n.isPinned && !n.isArchived).length,
       recent: Math.min(notes.filter((n) => !n.isArchived).length, 5),
       archived: notes.filter((n) => n.isArchived).length,
       trash: 0,
-    }),
-    [notes]
-  );
+      ...tagCounts,
+    };
+  }, [notes]);
 
   const selectedNote = notes.find((n) => n.id === selectedId) ?? null;
 
@@ -76,6 +88,7 @@ export default function Home() {
     setNotes((prev) => [newNote, ...prev]);
     setSelectedId(newNote.id);
     setActiveNav("all");
+    setOpenInEditMode(true);
   };
 
   const handleUpdate = (updated: Note) => {
@@ -104,11 +117,12 @@ export default function Home() {
         noteCounts={noteCounts}
         user={activeUser}
         onSwitchUser={handleSwitchUser}
+        onNewNote={handleNewNote}
       />
       <NotesList
         notes={filteredNotes}
         selectedId={selectedId}
-        onSelect={(note) => setSelectedId(note.id)}
+        onSelect={(note) => { setSelectedId(note.id); setOpenInEditMode(false); }}
         onDelete={handleDelete}
         onNewNote={handleNewNote}
         activeNav={activeNav}
@@ -118,6 +132,7 @@ export default function Home() {
         note={selectedNote}
         onUpdate={handleUpdate}
         onDelete={handleDelete}
+        defaultEditing={openInEditMode}
       />
     </div>
   );

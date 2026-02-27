@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { NavItem, UserProfile } from "@/lib/types";
-import BlobDecoration from "./BlobDecoration";
+import { TAGS } from "@/lib/mockData";
 import MareaLogo from "@/images/Marea-logo.png";
 
 type SidebarProps = {
@@ -11,6 +11,7 @@ type SidebarProps = {
   noteCounts: Record<string, number>;
   user: UserProfile;
   onSwitchUser: () => void;
+  onNewNote: () => void;
 };
 
 const NAV_ITEMS: NavItem[] = [
@@ -19,13 +20,6 @@ const NAV_ITEMS: NavItem[] = [
   { id: "recent", label: "Recent", icon: "clock" },
   { id: "archived", label: "Archived", icon: "archive" },
   { id: "trash", label: "Trash", icon: "trash" },
-];
-
-const TAG_ITEMS = [
-  { id: "tag-patient", label: "Patient Care", color: "#0F7F8E" },
-  { id: "tag-research", label: "Research", color: "#47B7C2" },
-  { id: "tag-workflow", label: "Workflow", color: "#2A9AA8" },
-  { id: "tag-meeting", label: "Meeting", color: "#5FAFB8" },
 ];
 
 function NavIcon({ type }: { type: string }) {
@@ -66,75 +60,48 @@ function NavIcon({ type }: { type: string }) {
   }
 }
 
-export default function Sidebar({ activeNav, onNavChange, noteCounts, user, onSwitchUser }: SidebarProps) {
+export default function Sidebar({ activeNav, onNavChange, noteCounts, user, onSwitchUser, onNewNote }: SidebarProps) {
   return (
-    <aside className="relative flex flex-col w-60 min-h-screen bg-[#0E5663] text-white overflow-hidden flex-shrink-0">
-      {/* Background blob decorations */}
-      <BlobDecoration
-        variant="teal"
-        size={300}
-        className="absolute -top-20 -right-24 opacity-10 pointer-events-none"
-      />
-      <BlobDecoration
-        variant="primary"
-        size={260}
-        className="absolute -bottom-16 -left-20 opacity-10 pointer-events-none"
-      />
+    <aside className="relative flex flex-col w-60 h-screen text-white overflow-hidden flex-shrink-0">
+      {/* Wave background — Marea color palette */}
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none"
-        viewBox="0 0 240 1000"
+        viewBox="0 0 240 900"
         preserveAspectRatio="none"
         aria-hidden="true"
       >
-        <path
-          d="M0 0H240V95C186 64 141 64 98 84C58 101 27 106 0 98V0Z"
-          fill="#BCD3D8"
-          fillOpacity="0.5"
-        />
-        <path
-          d="M0 92C43 112 89 102 136 82C177 66 209 68 240 84V214H0V92Z"
-          fill="#9AC9CF"
-          fillOpacity="0.55"
-        />
-        <path
-          d="M0 198C35 220 77 232 126 205C171 180 206 176 240 196V352H0V198Z"
-          fill="#76B6BF"
-          fillOpacity="0.58"
-        />
-        <path
-          d="M0 330C46 356 90 346 137 322C180 300 212 300 240 320V505H0V330Z"
-          fill="#4D9EAA"
-          fillOpacity="0.62"
-        />
-        <path
-          d="M0 488C39 510 81 512 125 490C170 468 208 470 240 486V674H0V488Z"
-          fill="#1F8D99"
-          fillOpacity="0.68"
-        />
-        <path
-          d="M0 660C45 686 90 680 142 652C184 629 215 628 240 642V835H0V660Z"
-          fill="#0A7582"
-          fillOpacity="0.74"
-        />
-        <path
-          d="M0 818C35 846 82 850 132 832C178 815 214 812 240 822V1000H0V818Z"
-          fill="#0A4F5C"
-          fillOpacity="0.8"
-        />
+        <rect width="240" height="900" fill="#C5E3E8" />
+        <path d="M0,138 C80,110 160,166 240,138 L240,900 L0,900 Z" fill="#8ECDD4" />
+        <path d="M0,276 C80,248 160,304 240,276 L240,900 L0,900 Z" fill="#50AEB9" />
+        <path d="M0,414 C80,386 160,442 240,414 L240,900 L0,900 Z" fill="#2C8E9C" />
+        <path d="M0,552 C80,524 160,580 240,552 L240,900 L0,900 Z" fill="#1A6E7B" />
+        <path d="M0,690 C80,662 160,718 240,690 L240,900 L0,900 Z" fill="#0F5260" />
+        <path d="M0,828 C80,800 160,856 240,828 L240,900 L0,900 Z" fill="#082430" />
       </svg>
+      {/* Dark teal gradient overlay for text readability */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0A3840]/68 via-[#0A3840]/48 to-[#0A3840]/08 pointer-events-none" />
 
       {/* Logo */}
-      <div className="relative z-10 px-6 pt-2 pb-0 border-b border-white/10 h-[92px] overflow-hidden flex items-start">
+      <div className="relative z-10 px-5 border-b border-white/10 h-[76px] overflow-hidden flex items-center">
         <Image
           src={MareaLogo}
           alt="Marea"
           priority
-          className="h-28 w-auto brightness-0 invert -mt-4"
+          className="h-16 w-auto brightness-0 invert"
         />
       </div>
 
       {/* Main nav */}
-      <nav className="relative z-10 flex-1 px-3 pt-2 space-y-0.5">
+      <nav className="relative z-10 flex-1 min-h-0 overflow-y-auto px-3 pt-3 space-y-0.5">
+        <button
+          onClick={onNewNote}
+          className="w-full flex items-center gap-2 px-3 py-2 mb-3 rounded-lg bg-white/15 hover:bg-white/22 text-white text-sm font-medium transition-all border border-white/20"
+        >
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          New Note
+        </button>
         <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-widest text-white/30">
           Library
         </p>
@@ -170,18 +137,35 @@ export default function Sidebar({ activeNav, onNavChange, noteCounts, user, onSw
           <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-widest text-white/30">
             Tags
           </p>
-          {TAG_ITEMS.map((tag) => (
-            <button
-              key={tag.id}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-white/55 hover:text-white/80 hover:bg-white/8 transition-all"
-            >
-              <span
-                className="w-2 h-2 rounded-full flex-shrink-0"
-                style={{ backgroundColor: tag.color }}
-              />
-              {tag.label}
-            </button>
-          ))}
+          {TAGS.map((tag) => {
+            const isActive = activeNav === tag.id;
+            return (
+              <button
+                key={tag.id}
+                onClick={() => onNavChange(tag.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${
+                  isActive
+                    ? "bg-white/15 text-white font-medium"
+                    : "text-white/55 hover:text-white/80 hover:bg-white/8"
+                }`}
+              >
+                <span
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: tag.color }}
+                />
+                <span className="flex-1 text-left">{tag.label}</span>
+                {noteCounts[tag.id] !== undefined && noteCounts[tag.id] > 0 && (
+                  <span
+                    className={`text-[11px] px-1.5 py-0.5 rounded-full min-w-[20px] text-center ${
+                      isActive ? "bg-white/20 text-white" : "bg-white/10 text-white/50"
+                    }`}
+                  >
+                    {noteCounts[tag.id]}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </nav>
 
