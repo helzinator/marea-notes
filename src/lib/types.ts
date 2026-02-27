@@ -8,6 +8,8 @@ export type Note = {
   id: string;
   title: string;
   content: string;
+  patientName?: string;
+  visitDate?: Date;
   tags: NoteTag[];
   isPinned: boolean;
   isArchived: boolean;

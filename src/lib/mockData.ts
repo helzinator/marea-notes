@@ -59,7 +59,9 @@ export const notesByUser: Record<string, Note[]> = {
   u1: [
     {
       id: "u1-n1",
-      title: "Treatment Plan – Patient #4821",
+      title: "Treatment Plan",
+      patientName: "M. Lawson",
+      visitDate: new Date("2026-02-26T09:00:00"),
       content:
         "Patient: M. Lawson, 42F\n\nPresenting concerns:\n• Sensitivity upper-left quadrant (tooth #14)\n• Cosmetic whitening interest\n\nDiagnosis:\n• Moderate caries #14, watch #15\n• Mild generalized gingivitis\n\nProposed treatment:\n1. Composite restoration #14\n2. Scaling & root planing (full mouth)\n3. Whitening tray impressions at follow-up\n\nNext appointment: March 6 – restorations",
       tags: [TAGS[6], TAGS[0]],
@@ -71,6 +73,8 @@ export const notesByUser: Record<string, Note[]> = {
     {
       id: "u1-n2",
       title: "Post-Op Notes – Extraction #19",
+      patientName: "R. Thompson",
+      visitDate: new Date("2026-02-24T14:30:00"),
       content:
         "Patient: R. Thompson, 55M\nProcedure: Surgical extraction, lower-left first molar (#19)\n\nComplications: None. Socket irrigated, collagen plug placed.\n\nPost-op instructions given verbally and via Marea automated letter.\n\nFollow-up: 7 days for socket check. Monitor for dry socket signs.\nPrescribed: Amoxicillin 500mg x7d, Ibuprofen 600mg PRN",
       tags: [TAGS[6], TAGS[4]],
@@ -294,7 +298,9 @@ export const notesByUser: Record<string, Note[]> = {
     },
     {
       id: "u4-n5",
-      title: "Follow-up – Singh Compliance Issue",
+      title: "Aligner Compliance Follow-up",
+      patientName: "P. Singh",
+      visitDate: new Date("2026-02-20T15:00:00"),
       content:
         "P. Singh, 22M – Invisalign compliance issue\n\nContext: At tray 6 check, noticeable tracking lag on lower anteriors. Patient admitted wearing 12–14 hrs/day instead of 22.\n\nActions taken:\n• Discussed importance of wear time and consequences for treatment length\n• Showed tracking comparison photos – patient seemed motivated\n• Set Marea automated 2-week check-in SMS to encourage compliance\n• If no improvement by tray 9, may need refinements\n\nFollow-up appointment: March 12",
       tags: [TAGS[4], TAGS[0]],

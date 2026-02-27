@@ -144,6 +144,30 @@ export default function NotesList({
                   </p>
                 </div>
 
+                {/* Patient name + visit date */}
+                {(note.patientName || note.visitDate) && (
+                  <div className="flex flex-wrap items-center gap-1.5 mb-1.5">
+                    {note.patientName && (
+                      <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#0F7F8E]/10 border border-[#0F7F8E]/20">
+                        <svg className="w-3 h-3 text-[#0F7F8E] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <span className="text-[12px] font-semibold text-[#0F7F8E]">{note.patientName}</span>
+                      </div>
+                    )}
+                    {note.visitDate && (
+                      <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#0F7F8E]/10 border border-[#0F7F8E]/20">
+                        <svg className="w-3 h-3 text-[#0F7F8E] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="text-[12px] font-semibold text-[#0F7F8E]">
+                          {note.visitDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Preview */}
                 <p className="text-[12px] text-[#3E6770] leading-relaxed line-clamp-2 mb-2.5">
                   {getPreview(note.content)}

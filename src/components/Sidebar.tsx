@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import { NavItem, UserProfile } from "@/lib/types";
 import BlobDecoration from "./BlobDecoration";
+import MareaLogo from "@/images/Marea-logo.png";
 
 type SidebarProps = {
   activeNav: string;
@@ -78,24 +80,61 @@ export default function Sidebar({ activeNav, onNavChange, noteCounts, user, onSw
         size={260}
         className="absolute -bottom-16 -left-20 opacity-10 pointer-events-none"
       />
+      <svg
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        viewBox="0 0 240 1000"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M0 0H240V95C186 64 141 64 98 84C58 101 27 106 0 98V0Z"
+          fill="#BCD3D8"
+          fillOpacity="0.5"
+        />
+        <path
+          d="M0 92C43 112 89 102 136 82C177 66 209 68 240 84V214H0V92Z"
+          fill="#9AC9CF"
+          fillOpacity="0.55"
+        />
+        <path
+          d="M0 198C35 220 77 232 126 205C171 180 206 176 240 196V352H0V198Z"
+          fill="#76B6BF"
+          fillOpacity="0.58"
+        />
+        <path
+          d="M0 330C46 356 90 346 137 322C180 300 212 300 240 320V505H0V330Z"
+          fill="#4D9EAA"
+          fillOpacity="0.62"
+        />
+        <path
+          d="M0 488C39 510 81 512 125 490C170 468 208 470 240 486V674H0V488Z"
+          fill="#1F8D99"
+          fillOpacity="0.68"
+        />
+        <path
+          d="M0 660C45 686 90 680 142 652C184 629 215 628 240 642V835H0V660Z"
+          fill="#0A7582"
+          fillOpacity="0.74"
+        />
+        <path
+          d="M0 818C35 846 82 850 132 832C178 815 214 812 240 822V1000H0V818Z"
+          fill="#0A4F5C"
+          fillOpacity="0.8"
+        />
+      </svg>
 
       {/* Logo */}
-      <div className="relative z-10 px-6 pt-7 pb-6 border-b border-white/10">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0F7F8E] to-[#47B7C2] flex items-center justify-center flex-shrink-0">
-            <svg className="w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-          </div>
-          <div>
-            <span className="text-base font-semibold tracking-tight">marea</span>
-            <span className="block text-[10px] text-white/40 leading-none -mt-0.5 tracking-wider uppercase">Notes</span>
-          </div>
-        </div>
+      <div className="relative z-10 px-6 pt-2 pb-0 border-b border-white/10 h-[92px] overflow-hidden flex items-start">
+        <Image
+          src={MareaLogo}
+          alt="Marea"
+          priority
+          className="h-28 w-auto brightness-0 invert -mt-4"
+        />
       </div>
 
       {/* Main nav */}
-      <nav className="relative z-10 flex-1 px-3 pt-5 space-y-0.5">
+      <nav className="relative z-10 flex-1 px-3 pt-2 space-y-0.5">
         <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-widest text-white/30">
           Library
         </p>
@@ -163,17 +202,23 @@ export default function Sidebar({ activeNav, onNavChange, noteCounts, user, onSw
 
       {/* User */}
       <div className="relative z-10 px-4 py-4 border-t border-white/10 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#0F7F8E] to-[#47B7C2] flex items-center justify-center text-xs font-semibold flex-shrink-0">
-          HC
+        <div
+          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0"
+          style={{ background: `linear-gradient(135deg, ${user.gradient[0]}, ${user.gradient[1]})` }}
+        >
+          {user.initials}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-white truncate">Helena Clifford</p>
-          <p className="text-[11px] text-white/40 truncate">helena@usemarea.com</p>
+          <p className="text-sm font-medium text-white truncate">{user.name}</p>
+          <p className="text-[11px] text-white/40 truncate">{user.role}</p>
         </div>
-        <button className="text-white/30 hover:text-white/70 transition-colors">
+        <button
+          onClick={onSwitchUser}
+          title="Switch user"
+          className="text-white/30 hover:text-white/70 transition-colors"
+        >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
         </button>
       </div>

@@ -4,15 +4,32 @@ import { useState, useMemo } from "react";
 import Sidebar from "@/components/Sidebar";
 import NotesList from "@/components/NotesList";
 import NoteEditor from "@/components/NoteEditor";
-import { Note } from "@/lib/types";
-import { MOCK_NOTES, TAGS } from "@/lib/mockData";
+import UserSelect from "@/components/UserSelect";
+import { Note, UserProfile } from "@/lib/types";
+import { notesByUser, TAGS } from "@/lib/mockData";
 
 let nextId = 100;
 
 export default function Home() {
-  const [notes, setNotes] = useState<Note[]>(MOCK_NOTES);
+  const [activeUser, setActiveUser] = useState<UserProfile | null>(null);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [activeNav, setActiveNav] = useState("all");
-  const [selectedId, setSelectedId] = useState<string | null>("n1");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const handleSelectUser = (user: UserProfile) => {
+    setActiveUser(user);
+    const userNotes = notesByUser[user.id] ?? [];
+    setNotes(userNotes);
+    const firstNote = userNotes.find((n) => n.isPinned && !n.isArchived) ?? userNotes[0] ?? null;
+    setSelectedId(firstNote?.id ?? null);
+    setActiveNav("all");
+  };
+
+  const handleSwitchUser = () => {
+    setActiveUser(null);
+    setNotes([]);
+    setSelectedId(null);
+  };
 
   const filteredNotes = useMemo(() => {
     switch (activeNav) {
@@ -75,12 +92,18 @@ export default function Home() {
     setSelectedId(null);
   };
 
+  if (!activeUser) {
+    return <UserSelect onSelect={handleSelectUser} />;
+  }
+
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar
         activeNav={activeNav}
         onNavChange={handleNavChange}
         noteCounts={noteCounts}
+        user={activeUser}
+        onSwitchUser={handleSwitchUser}
       />
       <NotesList
         notes={filteredNotes}

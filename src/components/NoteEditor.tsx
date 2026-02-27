@@ -77,6 +77,10 @@ function DeleteConfirmDialog({
 
 export default function NoteEditor({ note, onUpdate, onDelete }: NoteEditorProps) {
   const [title, setTitle] = useState(note?.title ?? "");
+  const [patientName, setPatientName] = useState(note?.patientName ?? "");
+  const [visitDate, setVisitDate] = useState(
+    note?.visitDate ? note.visitDate.toISOString().slice(0, 10) : ""
+  );
   const [content, setContent] = useState(note?.content ?? "");
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -110,7 +114,14 @@ export default function NoteEditor({ note, onUpdate, onDelete }: NoteEditorProps
   }
 
   const handleSave = () => {
-    onUpdate({ ...note, title, content, updatedAt: new Date() });
+    onUpdate({
+      ...note,
+      title,
+      patientName: patientName || undefined,
+      visitDate: visitDate ? new Date(visitDate) : undefined,
+      content,
+      updatedAt: new Date(),
+    });
     setIsEditing(false);
   };
 
@@ -190,6 +201,8 @@ export default function NoteEditor({ note, onUpdate, onDelete }: NoteEditorProps
                 <button
                   onClick={() => {
                     setTitle(note.title);
+                    setPatientName(note.patientName ?? "");
+                    setVisitDate(note.visitDate ? note.visitDate.toISOString().slice(0, 10) : "");
                     setContent(note.content);
                     setIsEditing(false);
                   }}
@@ -271,6 +284,47 @@ export default function NoteEditor({ note, onUpdate, onDelete }: NoteEditorProps
           <p className="text-xs text-[#7EAAB2] mb-6">
             Last updated {formatFullDate(note.updatedAt)}
           </p>
+
+          {/* Patient name */}
+          <div className="flex items-center gap-2.5 mb-6">
+            <svg className="w-4 h-4 text-[#7EAAB2] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            {isEditing ? (
+              <input
+                type="text"
+                value={patientName}
+                onChange={(e) => setPatientName(e.target.value)}
+                placeholder="Patient name…"
+                className="flex-1 text-sm text-[#2F5962] bg-[#EAF5F6] border border-[#B8D3D8] rounded-lg px-3 py-1.5 outline-none focus:border-[#0F7F8E] focus:ring-1 focus:ring-[#0F7F8E]/20 placeholder-[#9FC2C8] transition-colors"
+              />
+            ) : (
+              <span className={`text-sm ${note.patientName ? "text-[#2F5962] font-medium" : "text-[#9FC2C8] italic"}`}>
+                {note.patientName || "No patient assigned"}
+              </span>
+            )}
+          </div>
+
+          {/* Visit date */}
+          <div className="flex items-center gap-2.5 mb-6">
+            <svg className="w-4 h-4 text-[#7EAAB2] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            {isEditing ? (
+              <input
+                type="date"
+                value={visitDate}
+                onChange={(e) => setVisitDate(e.target.value)}
+                className="text-sm text-[#2F5962] bg-[#EAF5F6] border border-[#B8D3D8] rounded-lg px-3 py-1.5 outline-none focus:border-[#0F7F8E] focus:ring-1 focus:ring-[#0F7F8E]/20 transition-colors"
+              />
+            ) : (
+              <span className={`text-sm ${note.visitDate ? "text-[#2F5962] font-medium" : "text-[#9FC2C8] italic"}`}>
+                {note.visitDate
+                  ? note.visitDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+                  : "No visit date set"}
+              </span>
+            )}
+          </div>
 
           {/* Divider */}
           <div className="h-px bg-gradient-to-r from-[#B8D3D8] via-[#C4E2E7] to-transparent mb-6" />
